@@ -6,7 +6,7 @@ from .models import *
 from .schemas import *
 from .auth import current,editor,supervisor,issue,password_hash
 from .common import dump
-from . import intake_service as intake,conflict_service as conflict,triage_service as triage,document_service as document,referral_service as referral,closure_service as closure
+from . import intake_service as intake,conflict_service as conflict,triage_service as triage,document_service as document,referral_service as referral,closure_service as closure,model_service as model
 router=APIRouter()
 @router.post('/auth/login')
 def login(data:Login,db=Depends(session)):
@@ -15,7 +15,7 @@ def login(data:Login,db=Depends(session)):
     return {'token':issue(row),'username':row.username,'role':row.role}
 @router.get('/workspace')
 def workspace(db=Depends(session),user=Depends(current)):
-    return {m.__tablename__:[dump(v) for v in db.scalars(select(m).order_by(m.id))] for m in [Intake,Consent,Party,CaseParty,ConflictCheck,Triage,Requirement,Document,Agency,Referral,ServiceLog,Closure]}
+    return {m.__tablename__:[dump(v) for v in db.scalars(select(m).order_by(m.id))] for m in [Intake,Consent,Party,CaseParty,ConflictCheck,Triage,ModelVersion,TrialRun,Requirement,Document,Agency,Referral,ServiceLog,Closure]}
 @router.post('/intakes')
 def create(data:IntakeInput,db=Depends(session),user=Depends(editor)):return intake.create(db,data,user)
 @router.patch('/intakes/{id}/facts')
@@ -30,6 +30,12 @@ def check(data:CheckInput,db=Depends(session),user=Depends(editor)):return confl
 def enqueue(data:TriageInput,db=Depends(session),user=Depends(editor)):return triage.enqueue(db,data,user)
 @router.post('/triages/{id}/review')
 def review(id:int,data:ReviewInput,db=Depends(session),user=Depends(supervisor)):return triage.review(db,id,data,user)
+@router.post('/models')
+def register_model(data:ModelInput,db=Depends(session),user=Depends(supervisor)):return model.register(db,data,user)
+@router.post('/models/{id}/trial')
+def trial_model(id:int,db=Depends(session),user=Depends(supervisor)):return model.start_trial(db,id,user)
+@router.post('/models/{id}/publish')
+def publish_model(id:int,db=Depends(session),user=Depends(supervisor)):return model.publish(db,id,user)
 @router.post('/documents')
 def submit(data:DocumentInput,db=Depends(session),user=Depends(editor)):return document.submit(db,data,user)
 @router.post('/documents/{id}/verify')

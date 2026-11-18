@@ -20,6 +20,11 @@ class CheckInput(BaseModel):
     agency_id:int
 class TriageInput(BaseModel):
     intake_id:int
+class ModelInput(BaseModel):
+    code:str=Field(min_length=2,max_length=40)
+    note:str=Field(min_length=3,max_length=200)
+    seed:int=Field(ge=1,le=9999)
+    alpha:float=Field(gt=0,le=10)
 class ReviewInput(BaseModel):
     topic:str=Field(pattern='^(labor|housing|consumer)$')
     note:str=Field(min_length=3,max_length=200)

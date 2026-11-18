@@ -50,6 +50,7 @@ class Triage(Base):
     id:Mapped[int]=mapped_column(primary_key=True)
     intake_id:Mapped[int]=mapped_column(ForeignKey('intakes.id'))
     facts_version:Mapped[int]=mapped_column(Integer)
+    model_id:Mapped[int|None]=mapped_column(ForeignKey('model_versions.id'),nullable=True)
     status:Mapped[str]=mapped_column(String(20),default='queued')
     predicted:Mapped[str|None]=mapped_column(String(20),nullable=True)
     confidence:Mapped[float|None]=mapped_column(Float,nullable=True)
@@ -58,6 +59,31 @@ class Triage(Base):
     review_note:Mapped[str]=mapped_column(String(200),default='')
     metrics:Mapped[dict]=mapped_column(JSON,default=dict)
     error:Mapped[str]=mapped_column(String(200),default='')
+class ModelVersion(Base):
+    __tablename__='model_versions'
+    id:Mapped[int]=mapped_column(primary_key=True)
+    code:Mapped[str]=mapped_column(String(40),unique=True)
+    note:Mapped[str]=mapped_column(String(200),default='')
+    config:Mapped[dict]=mapped_column(JSON,default=dict)
+    status:Mapped[str]=mapped_column(String(20),default='candidate')
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
+class ModelRegistry(Base):
+    __tablename__='model_registry'
+    id:Mapped[int]=mapped_column(primary_key=True)
+    active_id:Mapped[int]=mapped_column(ForeignKey('model_versions.id'))
+class TrialRun(Base):
+    __tablename__='trial_runs'
+    id:Mapped[int]=mapped_column(primary_key=True)
+    model_id:Mapped[int]=mapped_column(ForeignKey('model_versions.id'))
+    baseline_id:Mapped[int]=mapped_column(ForeignKey('model_versions.id'))
+    status:Mapped[str]=mapped_column(String(20),default='queued')
+    candidate_metrics:Mapped[dict]=mapped_column(JSON,default=dict)
+    baseline_metrics:Mapped[dict]=mapped_column(JSON,default=dict)
+    eval_count:Mapped[int]=mapped_column(Integer,default=0)
+    eval_sha256:Mapped[str]=mapped_column(String(64),default='')
+    reason:Mapped[str]=mapped_column(String(300),default='')
+    created_at:Mapped[datetime]=mapped_column(DateTime(timezone=True),default=now)
+    finished_at:Mapped[datetime|None]=mapped_column(DateTime(timezone=True),nullable=True)
 class Requirement(Base):
     __tablename__='requirements'
     __table_args__=(UniqueConstraint('topic','code'),)
